@@ -88,41 +88,41 @@ Project includes **two entities**:
 
 ## Project's Structure
 
-node-toDo-app-db/
-├── config/
-│   └── config.js                    # Database configuration for Sequelize
-│
-├── controllers/
-│   ├── CategoriesController.js      # Handles category-related logic
-│   └── TodoController.js            # Handles todo-related logic
-│
-├── migrations/
-│   ├── 20251026143524-create-category.js  # Migration for creating 'Category' table
-│   └── 20251026143745-create-todo.js      # Migration for creating 'Todo' table
-│
-├── models/
-│   ├── category.js                  # Sequelize model for Category
-│   ├── todo.js                      # Sequelize model for Todo
-│   └── index.js                     # Model initialization and associations
-│
-├── routes/
-│   ├── CategoryRoute.js             # Routes for categories
-│   ├── TodoRoute.js                 # Routes for todos
-│   └── swaggerDocs.js               # Swagger documentation routes
-│
-├── seeders/
-│   ├── 20251026151718-demo-categories.js  # Seeds demo data for categories
-│   └── 20251026151800-demo-todos.js       # Seeds demo data for todos
-│
-├── swagger/
-│   └── swagger.js                   # Swagger configuration for API docs
-│
-├── .gitignore                       # Git ignore file
-├── app.js                           # Main entry point of the application
-├── example.env                      # Example environment configuration
-├── package.json                     # Project metadata and dependencies
-├── package-lock.json                # Dependency lock file
-└── README.md                        # Project documentation
+    node-toDo-app-db/
+    ├── config/
+    │   └── config.js                    # Database configuration for Sequelize
+    │
+    ├── controllers/
+    │   ├── CategoriesController.js      # Handles category-related logic
+    │   └── TodoController.js            # Handles todo-related logic
+    │
+    ├── migrations/
+    │   ├── 20251026143524-create-category.js  # Migration for creating 'Category' table
+    │   └── 20251026143745-create-todo.js      # Migration for creating 'Todo' table
+    │
+    ├── models/
+    │   ├── category.js                  # Sequelize model for Category
+    │   ├── todo.js                      # Sequelize model for Todo
+    │   └── index.js                     # Model initialization and associations
+    │
+    ├── routes/
+    │   ├── CategoryRoute.js             # Routes for categories
+    │   ├── TodoRoute.js                 # Routes for todos
+    │   └── swaggerDocs.js               # Swagger documentation routes
+    │
+    ├── seeders/
+    │   ├── 20251026151718-demo-categories.js  # Seeds demo data for categories
+    │   └── 20251026151800-demo-todos.js       # Seeds demo data for todos
+    │
+    ├── swagger/
+    │   └── swagger.js                   # Swagger configuration for API docs
+    │
+    ├── .gitignore                       # Git ignore file
+    ├── app.js                           # Main entry point of the application
+    ├── example.env                      # Example environment configuration
+    ├── package.json                     # Project metadata and dependencies
+    ├── package-lock.json                # Dependency lock file
+    └── README.md                        # Project documentation
 
 ---
 
