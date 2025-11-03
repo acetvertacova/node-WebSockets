@@ -169,18 +169,20 @@ export async function register(req, res) {
 }
 ```
 
-# Example: Register
+### Example: Register
 
 POST /api/auth/register
 
 Content-Type: application/json
 
 {
+
   "username": "john_doe",
 
   "email": "john@example.com",
   
   "password": "securePassword123"
+  
 }
 
 ---
@@ -210,24 +212,25 @@ export async function login(req, res) {
 }
 ```
 
-# Example: Login
+### Example: Login
 
 POST /api/auth/login
 
 Content-Type: application/json
 
 {
+
   "username": "john_doe",
   
   "password": "securePassword123"
+  
 }
 
 ---
 
 ### Profile (`GET /profile`)
 
-1. Pass the token in the `Authorization` header:  
-   `Authorization: Bearer <token>`
+1. Pass the token in the `Authorization` header:  `Authorization: Bearer <token>`
 2. If the token is valid, return the user information.
 3. If invalid, return status `401 Unauthorized`.
 
@@ -240,7 +243,7 @@ export async function getProfile(req, res) {
 }
 ```
 
-# Example: Get Profile
+### Example: Get Profile
 
 GET /api/auth/profile
 
@@ -248,9 +251,7 @@ Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-### Step 3 - Authorization Implementation
-
-## Step 3: Authorization Implementation
+### Step 3: Authorization Implementation
 
 ### Role-Based Access Control
 
