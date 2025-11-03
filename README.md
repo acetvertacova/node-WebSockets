@@ -170,12 +170,16 @@ export async function register(req, res) {
 ```
 
 # Example: Register
+
 POST /api/auth/register
+
 Content-Type: application/json
 
 {
   "username": "john_doe",
+
   "email": "john@example.com",
+  
   "password": "securePassword123"
 }
 
@@ -207,17 +211,21 @@ export async function login(req, res) {
 ```
 
 # Example: Login
+
 POST /api/auth/login
+
 Content-Type: application/json
 
 {
   "username": "john_doe",
+  
   "password": "securePassword123"
 }
 
 ---
 
 ### Profile (`GET /profile`)
+
 1. Pass the token in the `Authorization` header:  
    `Authorization: Bearer <token>`
 2. If the token is valid, return the user information.
@@ -233,7 +241,9 @@ export async function getProfile(req, res) {
 ```
 
 # Example: Get Profile
+
 GET /api/auth/profile
+
 Authorization: Bearer <JWT_TOKEN>
 
 ---
@@ -345,7 +355,7 @@ Content-Type: application/json
   "username": "admin",
   "password": "adminpass"
 }
-
+```
 
 
 ## Control Questions?
