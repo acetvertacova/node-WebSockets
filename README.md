@@ -169,20 +169,14 @@ export async function register(req, res) {
 }
 ```
 
-### Example: Register
-
+# Example: Register
 POST /api/auth/register
-
 Content-Type: application/json
 
 {
-
   "username": "john_doe",
-
   "email": "john@example.com",
-  
   "password": "securePassword123"
-  
 }
 
 ---
@@ -358,79 +352,130 @@ Content-Type: application/json
 }
 ```
 
+<img src="usage/admin-login.png">
+
+---
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "password": "password123"
+}
+```
+
+<img src="usage/user-login.png">
+
+### 3. Test Scenarios
+
+a) User creates a task (success)
+
+```http
+POST /api/todos
+Authorization: Bearer <USER_JWT_TOKEN>
+Content-Type: application/json
+
+{
+  "title": "Finish writing ORM lab report",
+  "category_id": 2
+}
+```
+
+Response: 201 Created
+
+<img src="usage/user-post.png">
+
+---
+
+b) User tries to delete a task (forbidden)
+
+```http
+DELETE /api/todos/<uuid>
+Authorization: Bearer <USER_JWT_TOKEN>
+```
+
+Response: 403 Forbidden
+
+<img src="usage/user-delete.png">
+
+---
+
+c) Admin updates/deletes any task (success)
+
+```http
+PUT /api/todos/<uuid>
+Authorization: Bearer <ADMIN_JWT_TOKEN>
+Content-Type: application/json
+
+{
+  "title": "test",
+  "completed": true,
+  "category_id": 1
+}
+```
+
+Response: 200 OK
+
+<img src="usage/admin-put.png">
+
+---
+
+```http
+DELETE /api/todos/<uuid>
+Authorization: Bearer <ADMIN_JWT_TOKEN>
+```
+
+Response: 204 No Content
+
+<img src="usage/admin-delete.png">
+
+---
 
 ## Control Questions?
 
-1. What is a relational database, and what advantages does it provide?
 
-A **relational database** is a collection of data points with pre-defined relationships between them. The relational model organizes data into tables — with each row representing an individual record and each column consisting of attributes that contain values. 
+### 1. What is JWT and how does it work?
 
-**Advantages:**
-- Data integrity
-- Security
-- Backup and disaster recovery
-- Community support
+ A JSON Web Token (JWT) is a secure way to send information between a client and a server. It is mainly used in web applications and APIs to verify users and prevent unauthorized access. A JWT is JSON data secured with a cryptographic signature. Consists of three parts: **header**, **payload**, **signature**.  
 
-2. What types of relationships exist between tables in relational databases?
+### 2. How to securely store user passwords?
 
-- `One-to-One (1:1)`: Each row in table A corresponds to one row in table B.
-- `One-to-Many (1:N)`: A single row in table A can relate to multiple rows in table B.
-- `Many-to-Many (M:N)`: Rows in table A can relate to multiple rows in table B, and vice versa, usually implemented with a reference table.
+- Use **bcrypt** or a similar library to hash passwords.  
+- Never store passwords in plain text.  
+- Hash the password before saving it to the database and verify it during login with `bcrypt.compare()`.  
+- Optionally, use a **salt** to increase security. 
 
-3. What is a RESTful API, and what is it used for?
+### 3. What is the difference between authentication and authorization?
 
-REST API stands for Representational State Transfer API. It is a type of API (Application Programming Interface) that allows communication between different systems over the internet. REST APIs work by sending requests and receiving responses, typically in JSON format, between the client and server.
+- **Authentication** — verifying the identity of the user (e.g., login and password).  
+- **Authorization** — checking the user’s permissions to access resources (e.g., user vs admin role).  
+- Simple way to remember: **Authentication = Who are you?**, **Authorization = What can you do?**  
 
-4. What is an SQL injection, and how can it be prevented?
+### 4. What are the advantages and disadvantages of using Passport.js for authentication in Node.js?
 
-SQL injection is a code injection technique that might destroy your database. SQL injection usually occurs when you ask a user for input, like their `username/userid`, and instead of a `name/id`, the user gives you an SQL statement that you will **unknowingly** run on your database. 
+**Advantages:**  
 
-**Prevention:**
-- Use parameterized queries or prepared statements.
-- Use ORMs that automatically handle query escaping.
-- Validate and sanitize user input.
+One of the main benefits of passport.js is that it abstracts away the complexity of handling different authentication methods and protocols. You don't have to worry about the details of encrypting passwords, generating tokens, validating credentials, or redirecting users.
 
-5. What is the difference between an ORM and raw SQL queries? Advantages and disadvantages:
+**Disadvantages:**  
 
-Using raw SQL Development and Object-Relational Mapping (ORM) are two different approaches to interacting with databases in software development.
-
-*Raw SQL:*
-
-**Pros:**
-- Full control over queries
-- High performance
-- Can optimize complex operations
-
-**Cons:**
-- Portability
-- Complexity
-- Risk of SQL injection if not careful
-
-*ORM (Object-Relational Mapping):*
-
-**Pros:**
-- Abstraction
-- Productivity
-- Type safety
-- Code readability
-
-**Cons:**
-- Performance overhead
-- Limited control
-- Complexity
+Can be complex for beginners due to strategies and serialization. Sometimes overkill for simple JWT-based apps. Adds an extra dependency and configuration overhead.  
 
 ---
 
 ## Useful Links
 
-1. [**GitHub repository**] (https://github.com/MSU-Courses/development-server-side-applications/tree/main/07_ORM)
-2. [**Sequelize CLI Commands** – guide to migrations, seeders, and more:] (https://sequelize.org/docs/v6/other-topics/migrations/)
-3. [**Building Your First REST API with Node JS, Express, and Sequelize**](https://medium.com/@mtalhanasir96/building-your-first-rest-api-with-node-js-express-and-sequelize-b041f9910b8a)
-4. [**Server Side Pagination in Node JS With Sequelize ORM and MySQL**] (https://medium.com/swlh/server-side-pagination-in-node-js-with-sequelize-orm-and-mysql-73b0190e91fa)
-5. [**Types of Relationship in Database**](https://www.geeksforgeeks.org/dbms/types-of-relationship-in-database/)
-6. [**REST API Introduction**] (https://www.geeksforgeeks.org/node-js/rest-api-introduction/)
-7. [**SQL Injection**] (https://www.w3schools.com/sql/sql_injection.asp)
-8. [**The pros and cons of using raw SQL versus ORM for database development**] (https://medium.com/@ritika.adequate/the-pros-and-cons-of-using-raw-sql-versus-orm-for-database-development-e9edde7ee31e)
+- [JWT (JSON Web Token) – GeeksforGeeks](https://www.geeksforgeeks.org/web-tech/json-web-token-jwt/) – Overview of JWTs and how they work.
+- [How to Store Passwords in a Database – GeeksforGeeks](https://www.geeksforgeeks.org/dbms/store-password-database/) – Secure password storage methods.
+- [Difference Between Authentication and Authorization – GeeksforGeeks](https://www.geeksforgeeks.org/computer-networks/difference-between-authentication-and-authorization/) – Explains the difference between authn and authz.
+- [Benefits and Drawbacks of Using Passport.js for Authentication – LinkedIn Advice](https://www.linkedin.com/advice/0/what-benefits-drawbacks-using-passportjs-authentication) – Pros and cons of Passport.js.
+- [Server-side Applications Authentication Example – GitHub MSU-Courses](https://github.com/MSU-Courses/development-server-side-applications/tree/main/08_Auth) – Example project for implementing authentication.
+
+
+
+
 
 
 
