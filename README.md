@@ -1,50 +1,17 @@
-# Lab №2: Working with a Database
+# Lab №3: Authentication and Authorization
+
+## Project Background
+
+The current project is a continuation of the development started in the [node-toDo-app-db](https://github.com/acetvertacova/node-toDo-app-db) repository.
 
 ---
 
 ## 🎯 Objective
 
-- Learn how to design and implement a **REST API** with multiple **related entities**.  
-- Practice using **PostgreSQL** in a **Node.js + Express** application with either an **ORM**.
-- Implement proper **CRUD operations**, as well as **filtering**, **sorting**, and **pagination**.  
-- Understand and apply **one-to-many (1:N)** relationships in relational databases.
+- Learn methods of authentication and authorization in backend applications using Node.js.
+- Implement REST API protection using JWT (JSON Web Token).
+- Learn to restrict access to resources based on user roles.
 
----
-
-## 📘 Task Description
-
-Develop a **Task Management Service (Todo List)** with the following features:
-
-- View the list of tasks  
-- Create a new task  
-- Toggle the task status (completed / not completed)  
-- Delete a task  
-- Edit a task  
-- Filter tasks by **categories**  
-- Search tasks by **title**  
-- Paginate the task list  
-
----
-
-## 🧩 Entities
-
-Project includes **two entities**:
-
-### 1. `categories`
-- Represents task categories.
-
-### 2. `todos`
-- Represents individual tasks.  
-- Each task must belong to **one category**.
-
----
-
-## 💡 Used Stack
-
-- **Backend:** Node.js + Express  
-- **Database:** PostgreSQL  
-- **ORM:** Sequelize 
-- **API Testing:** Postman 
 
 ---
 
@@ -91,27 +58,34 @@ Project includes **two entities**:
     node-toDo-app-db/
     ├── config/
     │   └── config.js                    # Database configuration for Sequelize
+    ├── middleware/                      # Custom middleware 
+    │   └── auth.js                      
     │
     ├── controllers/
     │   ├── CategoriesController.js      # Handles category-related logic
+    │   ├── UserController.js            # Handles user-related logic
     │   └── TodoController.js            # Handles todo-related logic
     │
     ├── migrations/
     │   ├── 20251026143524-create-category.js  # Migration for creating 'Category' table
+    │   ├── 20251026143744-create-user.js      # Migration for creating 'User' table
     │   └── 20251026143745-create-todo.js      # Migration for creating 'Todo' table
     │
     ├── models/
     │   ├── category.js                  # Sequelize model for Category
+    │   ├── user.js                      # Sequelize model for User
     │   ├── todo.js                      # Sequelize model for Todo
     │   └── index.js                     # Model initialization and associations
     │
     ├── routes/
     │   ├── CategoryRoute.js             # Routes for categories
+    │   ├── UserRoute.js                 # Routes for users
     │   ├── TodoRoute.js                 # Routes for todos
     │   └── swaggerDocs.js               # Swagger documentation routes
     │
     ├── seeders/
     │   ├── 20251026151718-demo-categories.js  # Seeds demo data for categories
+    │   ├── 20251026151812-demo-user.js        # Seeds demo data for users
     │   └── 20251026151800-demo-todos.js       # Seeds demo data for todos
     │
     ├── swagger/
@@ -130,315 +104,249 @@ Project includes **two entities**:
 
 ---
 
-### Step 1 – Database 
+### Step 1: Database 
 
-1. Configure the database connection
+<img src="usage/db.png">
 
-Application uses `Sequelize` with environment-based configurations. The `config/config.js` file reads database credentials from the `.env` (example.env) file using `dotenv`.
+Add a new `users` table and establish a relationship with the `todos` table.
 
-```javascript
-    development: {
-    username: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    host: process.env.DB_HOST,
-    dialect: "postgres",
-  }
-```
+### Users Table
 
-- `dotenv` automatically loads variables from a `.env` file into `process.env`.
-- This setup keeps sensitive information (like database passwords) out of the codebase.
-- Can configure separate databases for different environments:
-  - **development**
-  - **test**
-  - **production**
+| Field       | Type         | Description                        |
+|------------ |------------ |---------------------------------- |
+| id          | SERIAL (PK) | Unique identifier for the user     |
+| username    | VARCHAR(50) | Unique username                    |
+| email       | VARCHAR(100)| User email (unique)                |
+| password    | TEXT        | Password hash                      |
+| role        | VARCHAR(20) | User role (`user`, `admin`)        |
+| created_at  | TIMESTAMP   | Registration date                  |
+| updated_at  | TIMESTAMP   | Last update date                   |
 
-2. Migrations
+### Changes in `todos` Table
+Add a `user_id` field to link each task to its owner:
 
-The database has two tables: `Categories` and `Todos`.  
-Migrations create the schema and seed initial data:
-
-**Categories table creation (migration snippet):**
-
-```javascript
-    await queryInterface.createTable('Categories', {
-    id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
-    name: { type: Sequelize.STRING(100), allowNull: false },
-    created_at: { type: Sequelize.DATE, allowNull: false },
-    updated_at: { type: Sequelize.DATE, allowNull: false }
-    });
-```
-
-**Todos table creation (migration snippet):**
-
-```javascript
-    await queryInterface.createTable('Todos', {
-    id: { type: Sequelize.UUID, defaultValue: Sequelize.literal('gen_random_uuid()'), primaryKey: true },
-    title: { type: Sequelize.TEXT, allowNull: false },
-    completed: { type: Sequelize.BOOLEAN, defaultValue: false },
-    category_id: {
-        type: Sequelize.INTEGER,
-        references: { model: 'Categories', key: 'id' },
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
-    },
-    due_date: { type: Sequelize.DATE },
-    created_at: { type: Sequelize.DATE, allowNull: false },
-    updated_at: { type: Sequelize.DATE, allowNull: false }
-    });
-```
-
-**Seeding initial categories:**
-
-```javascript
-    await queryInterface.bulkInsert('Categories', [
-    { name: 'Work', created_at: new Date(), updated_at: new Date() },
-    { name: 'Personal', created_at: new Date(), updated_at: new Date() },
-    { name: 'Shopping', created_at: new Date(), updated_at: new Date() }
-    ]);
-```
-
-**Seeding initial todos:**
-
-```javascript
-    await queryInterface.bulkInsert('Todos', [
-    { title: 'Finish project report', completed: false, category_id: 1, due_date: new Date(), created_at: new Date(), updated_at: new Date() },
-    { title: 'Buy groceries', completed: false, category_id: 3, due_date: new Date(), created_at: new Date(), updated_at: new Date() },
-    { title: 'Go to the gym', completed: true, category_id: 2, due_date: new Date(), created_at: new Date(), updated_at: new Date() }
-    ]);
-```
+| Field    | Type        | Description                                        |
+|----------|------------ |----------------------------------------------------|
+| user_id  | INTEGER (FK)| Foreign key referencing `users` table (task owner) |
 
 ---
 
-### Step 2 - Models
+### Step 2: Authentication Implementation
 
-The project uses Sequelize models to interact with the database.
+Add authentication routes under `/api/auth`
 
-**Category model:**
+| Method | URL                  | Description                               | Response       |
+|--------|---------------------|--------------------------------------------|----------------|
+| POST   | /api/auth/register  | Register a new user                        | 201 Created    |
+| POST   | /api/auth/login     | User login (receive JWT token)             | 200 OK         |
+| GET    | /api/auth/profile   | Get current user info (by token)           | 200 OK         |
+
+---
+
+### Registration (`POST /register`)
 
 ```javascript
-import { Model, DataTypes } from 'sequelize';
+// register function
+export async function register(req, res) {
+    try {
+        const { username, email, password } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-export default (sequelize) => {
-  class Category extends Model {
-    static associate(models) {
-      Category.hasMany(models.Todo, { foreignKey: 'category_id', as: 'todos' });
+        const existingUser = await User.findOne({
+            where: { [Op.or]: [{ email }, { username }] }
+        });
+
+        if (existingUser) {
+            throw new Error('Username or email already in use');
+        }
+
+        const user = new User({ username, email, password: hashedPassword });
+        await user.save();
+        res.status(201).json({ message: 'User registered successfully' });
+    } catch (error) {
+        res.status(500).json({ error: 'Registration failed' });
     }
-  }
-  Category.init({
-    name: { type: DataTypes.STRING(100), allowNull: false }
-  }, {
-    sequelize,
-    modelName: 'Category',
-    tableName: 'Categories',
-    underscored: true,
-  });
-  return Category;
-};
+}
 ```
 
-**Todo model:**
+# Example: Register
+POST /api/auth/register
+Content-Type: application/json
 
-```javascript
-import { Model, DataTypes } from 'sequelize';
-
-export default (sequelize) => {
-  class Todo extends Model {
-    static associate(models) {
-      Todo.belongsTo(models.Category, { foreignKey: 'category_id', as: 'category' });
-    }
-  }
-  Todo.init({
-    id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
-    title: { type: DataTypes.TEXT, allowNull: false },
-    completed: { type: DataTypes.BOOLEAN, defaultValue: false },
-    category_id: { type: DataTypes.INTEGER, allowNull: true },
-    due_date: { type: DataTypes.DATE, allowNull: true }
-  }, {
-    sequelize,
-    modelName: 'Todo',
-    tableName: 'Todos',
-    underscored: true,
-  });
-  return Todo;
-};
-```
-
-**Database initialization (index.js snippet):**
-
-```javascript
-import Sequelize, { DataTypes } from 'sequelize';
-import configLoader from '../config/config.js';
-
-const env = process.env.NODE_ENV || 'development';
-const config = configLoader[env];
-const sequelize = new Sequelize(config.database, config.username, config.password, config);
-
-const db = {};
-// Dynamically import all models
-for (const file of readdirSync(__dirname)) {
-  if (file.endsWith('.js') && !file.includes('.test.js')) {
-    const model = (await import(join(__dirname, file))).default(sequelize, DataTypes);
-    db[model.name] = model;
-  }
+{
+  "username": "john_doe",
+  "email": "john@example.com",
+  "password": "securePassword123"
 }
 
-// Apply associations
-Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) db[modelName].associate(db);
-});
+---
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
+### Login (`POST /login`)
+1. Check that the user exists and the password is correct.
+2. Generate a JWT token containing:
+   - `userId`
+   - `username`
+   - `role`
+3. Return the token in the response.
 
-export default db;
+```javascript
+// login function
+export async function login(req, res) {
+    const { username, password } = req.body;
+    const user = await User.findOne({ where: { username } });
+
+    if (!user) return res.status(401).send("Credentials are wrong");
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) return res.status(401).send("Credentials are wrong");
+
+    const payload = { id: user.id, username: user.username, role: user.role };
+    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "15m" });
+    res.json({ token });
+}
 ```
 
-> **Note:** These snippets demonstrate how to:
-> - Create the database tables (`Categories` and `Todos`) using migrations  
-> - Seed initial data into both tables  
-> - Define Sequelize models with proper associations  
-> - Initialize Sequelize and dynamically load all models for use in the application
+# Example: Login
+POST /api/auth/login
+Content-Type: application/json
 
-### Running Migrations and Seeds
-
-Use the Sequelize CLI to manage your database:
-
-- **Run all migrations:**  
-
-```bash
-npx sequelize-cli db:migrate
-```
-
-- **Undo all migrations:**
-
-```bash
-npx sequelize-cli db:migrate:undo:all
-```
-
-- **Run all seeders:**
-
-```bash
-npx sequelize-cli db:seed:all
-```
-
-- **Undo all seeders:**
-
-```bash
-npx sequelize-cli db:seed:undo:all
-```
-
-> For more details, see **2. Sequelize CLI Commands** in the [Useful Links](#useful-links) section – a complete guide to migrations, seeders, and more.
+{
+  "username": "john_doe",
+  "password": "securePassword123"
+}
 
 ---
 
-### Step 3 - API Implementation
+### Profile (`GET /profile`)
+1. Pass the token in the `Authorization` header:  
+   `Authorization: Bearer <token>`
+2. If the token is valid, return the user information.
+3. If invalid, return status `401 Unauthorized`.
 
-The project provides a RESTful API to manage **Todos** and **Categories**.
+```javascript
+// getProfile function
+export async function getProfile(req, res) {
+    const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
+    if (!user) return res.status(401).json({ message: "User not found" });
+    res.json(user);
+}
+```
 
-### Categories API
-
-| Method | URL                 | Description                  | Response Code |
-|--------|---------------------|------------------------------|---------------|
-| GET    | /api/categories     | Get all categories           | 200           |
-| GET    | /api/categories/:id | Get category by ID           | 200 / 404     |
-| POST   | /api/categories     | Create a new category (name) | 201           |
-| PUT    | /api/categories/:id | Update category name         | 200 / 404     |
-| DELETE | /api/categories/:id | Delete a category            | 204 / 404     |
+# Example: Get Profile
+GET /api/auth/profile
+Authorization: Bearer <JWT_TOKEN>
 
 ---
 
-### Todos API
+### Step 3 - Authorization Implementation
 
-| Method | URL                   | Description                                 | Response Code |
-|--------|-----------------------|---------------------------------------------|---------------|
-| GET    | /api/todos            | Get all todos                               | 200           |
-| GET    | /api/todos/:id        | Get todo by ID                              | 200 / 404     |
-| POST   | /api/todos            | Create a new todo (title, category_id)      | 201           |
-| PUT    | /api/todos/:id        | Update todo (title, completed, category_id) | 200 / 404     |
-| PATCH  | /api/todos/:id/toggle | Toggle todo completion status               | 200 / 404     |
-| DELETE | /api/todos/:id        | Delete a todo                               | 204 / 404     |
+## Step 3: Authorization Implementation
+
+### Role-Based Access Control
+
+- **User (`role = user`)**
+  - Can create tasks (`POST /api/todos`)
+  - Can view tasks (`GET /api/todos`)
+
+- **Admin (`role = admin`)**
+  - Full access to all tasks (`CRUD /api/todos`)
+  - Manage categories (`CRUD /api/categories`)
+
+---
+
+### Middleware: auth.middleware.js
+
+```javascript
+import jwt from 'jsonwebtoken';
+import db from '../models/index.js';
+const Todo = db.Todo;
+
+const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
+
+// Authenticate JWT
+export function authenticateJWT(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    if (!authHeader) return res.sendStatus(401);
+
+    const token = authHeader.split(" ")[1];
+    try {
+        const payload = jwt.verify(token, SECRET_KEY);
+        req.user = payload;
+        next();
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+}
+```
 
 ---
 
-### Todos Controller
-
-The `TodoController` handles all operations for the `/api/todos` endpoint.
-
-**Get all todos (with filtering, search, pagination, sorting):**
-
 ```javascript
-const { count, rows } = await Todo.findAndCountAll({
-    include: { model: Category, as: 'category', attributes: ['id', 'name'] },
-    where,       // Filtering by category and search
-    order,       // Sorting
-    limit, offset // Pagination
-});
+// Admin-only access
+export function isAdmin(req, res, next) {
+    if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+    if (req.user.role !== 'admin') return res.status(403).json({ message: 'Forbidden: Admins only' });
+    next();
+}
 ```
-
-<img src="./usage/get.png">
-
-<img src="./usage/filter.png">
-
-<img src="./usage/search.png">
-
-<img src="./usage/sort.png">
-
-<img src="./usage/pagination.png">
-
-**Get todo by ID:**
-
-```javascript
-const todo = await Todo.findByPk(req.params.id);
-if (!todo) return res.status(404).json({ error: 'Task not found' });
-```
-
-<img src="./usage/getById.png">
-
-**Create a new todo:**
-
-```javascript
-const newTodo = await Todo.create({ title, category_id });
-res.status(201).json(newTodo);
-```
-
-<img src="./usage/post.png">
-
-**Update a todo:**
-
-```javascript
-todo.title = title ?? todo.title;
-todo.completed = completed ?? todo.completed;
-await todo.save();
-```
-
-<img src="./usage/put.png">
-
-**Toggle completion status:**
-
-```javascript
-todo.completed = !todo.completed;
-await todo.save();
-res.json(todo);
-```
-
-<img src="./usage/patch.png">
-
-**Delete a todo:**
-
-```javascript
-await todo.destroy();
-res.status(204).send();
-```
-
-<img src="./usage/delete.png">
-
-
-> **Note:** The controller also handles errors and returns appropriate HTTP status codes (200, 201, 204, 404, 500).
-
-> **Note:** The same business logic (CRUD operations, error handling, and HTTP status codes) is applied in the `CategoryController`.
 
 ---
+
+```javascript
+// Owner or Admin access
+export async function isOwnerOrAdmin(req, res, next) {
+    const user = req.user;
+    const todoId = req.params.id;
+
+    if (!user) return res.status(401).json({ message: 'Unauthorized' });
+
+    const todo = await Todo.findByPk(todoId);
+    if (!todo) return res.status(404).json({ message: 'Task not found' });
+
+    if (user.role === 'admin' || todo.user_id === user.id) return next();
+
+    return res.status(403).json({ message: 'Forbidden: Not owner or admin' });
+}
+```
+
+---
+
+### Example Usage in Routes
+
+```javascript
+// Users
+todoRouter.get('/', authenticateJWT, todoController.getAll);
+todoRouter.post('/', authenticateJWT, todoController.create);
+
+// Owners or Admins
+todoRouter.get('/:id', authenticateJWT, isOwnerOrAdmin, todoController.getById);
+
+// Admin only
+todoRouter.put('/:id', authenticateJWT, isAdmin, todoController.update);
+todoRouter.delete('/:id', authenticateJWT, isAdmin, todoController.remove);
+todoRouter.patch('/:id/toggle', authenticateJWT, isAdmin, todoController.toggleCompleted);
+```
+
+---
+
+## Step 4: Testing and Demonstration
+
+### 1. Register Users
+
+<img src = "usage/users.png">
+
+### 1. Login Users
+
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "adminpass"
+}
+
+
 
 ## Control Questions?
 
