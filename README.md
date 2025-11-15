@@ -442,11 +442,11 @@ The application uses a centralized error handling system to provide consistent J
 - `AppError` – Base class for all operational errors.  
 - `AuthenticationError` – For authentication failures (HTTP 401, 403).  
 
-<src img="usage/403.png">
+<img src="usage/403.png">
 
 - `NotFoundError` – For resources that cannot be found (HTTP 404).  
 
-<src img="usage/404.png">
+<img src="usage/404.png">
 
 - `ValidationError` – For validation failures (HTTP 400).  
 - `CategoryNotFoundError`, `ToDoNotFoundError`, `UserNotFoundError` – Specific resource-related errors.  
@@ -464,7 +464,7 @@ Request data is validated using **express-validator**. Each route that accepts u
 
 Validation errors are caught by the `handleValidationErrors` middleware and returned in the unified JSON format.
 
-<src img="usage/400.png">
+<img src="usage/400.png">
 
 ---
 
