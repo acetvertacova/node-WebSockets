@@ -433,6 +433,63 @@ Response: 204 No Content
 
 ---
 
+## Error Handling, Validation, and Logging
+
+### 1. Centralized Error Handling
+
+The application uses a centralized error handling system to provide consistent JSON responses for all errors. Custom error classes include:
+
+- `AppError` – Base class for all operational errors.  
+- `AuthenticationError` – For authentication failures (HTTP 401, 403).  
+
+<src img="usage/403.png">
+
+- `NotFoundError` – For resources that cannot be found (HTTP 404).  
+
+<src img="usage/404.png">
+
+- `ValidationError` – For validation failures (HTTP 400).  
+- `CategoryNotFoundError`, `ToDoNotFoundError`, `UserNotFoundError` – Specific resource-related errors.  
+
+> **Note:** Asynchronous route handlers use an `asyncWrapper` utility to catch all exceptions and forward them to the global error handler.
+
+---
+
+### 2. Data Validation
+
+Request data is validated using **express-validator**. Each route that accepts user input defines a validation schema. Example for creating a task:
+
+- `title` – Required, trimmed, minimum 3 characters.  
+- `category_id` – Optional, must be a positive integer if provided.  
+
+Validation errors are caught by the `handleValidationErrors` middleware and returned in the unified JSON format.
+
+<src img="usage/400.png">
+
+---
+
+### 3. Logging
+
+Logging is implemented using **winston** to track important events and errors. Features include:
+
+- Logs all errors with request details, HTTP method, and path.  
+- Supports file-based logging with rotation (e.g., `winston-daily-rotate-file`) or external logging services.  
+- Can log successful requests, validation errors, and server errors based on configuration.
+
+```javascript
+{
+    "level":"error",
+    "message":"Request failed",
+    "method":"POST",
+    "path":"/api/todos",
+    "requestId":"81e953be-f94e-412f-b96a-dd581f4b8516",
+    "statusCode":400,
+    "timestamp":"2025-11-15 23:44:05"
+    }
+```
+
+---
+
 ## Control Questions?
 
 
@@ -463,6 +520,45 @@ One of the main benefits of passport.js is that it abstracts away the complexity
 
 Can be complex for beginners due to strategies and serialization. Sometimes overkill for simple JWT-based apps. Adds an extra dependency and configuration overhead.  
 
+### 5. Advantages of Centralized Error Handling in Express
+
+- **Consistency of responses:** All errors are returned in a unified JSON format, making it easier for frontend or client applications to handle them.  
+- **Simplified route code:** No need to write repetitive `try/catch` blocks in every route, especially for asynchronous operations.  
+- **Management of different error types:** Custom error classes (e.g., `NotFoundError`, `ValidationError`, `AuthenticationError`) allow easy differentiation and handling of various situations.  
+- **Easier logging and monitoring:** All errors pass through a single handler, simplifying log management and integration with monitoring systems.  
+
+### 6. Logging Categories and Reasoning
+
+The system tracks the following log categories:
+
+1. **Server errors (`error`)**  
+   - Unexpected errors that require developer attention.  
+   - Helps quickly identify and fix bugs.  
+ 
+2. **Successful requests (`info`)**  
+   - Tracks API activity for auditing and statistics.  
+   - Helps analyze frequently used routes or features.  
+
+**Reasoning:**  
+This set covers key events: internal problems, user mistakes, and normal application activity, balancing useful insights and log volume.
+
+### 7. Approaches to Data Validation in Express
+
+Common approaches:
+
+1. **Manual validation using `if` and `throw`**  
+   - Simple checks directly in route handlers.  
+   - Drawback: code duplication and poor scalability.  
+
+2. **Validation libraries**  
+   - **express-validator** – route-level validators using chains, integrates well with middleware.  
+   - **Joi** – schema-based validation of entire objects, more declarative.  
+   - **zod** – modern library for TypeScript/JS, supports validation and type inference.  
+
+**Approach used in this project:**  
+- **express-validator** is used for route validation (`createTaskValidationSchema`, `getAllTasksValidationSchema`, ...).  
+- Validation errors are automatically forwarded to the global error handler via `handleValidationErrors`.  
+- Provides detailed error messages for each field.
 ---
 
 ## Useful Links
@@ -472,6 +568,9 @@ Can be complex for beginners due to strategies and serialization. Sometimes over
 - [Difference Between Authentication and Authorization – GeeksforGeeks](https://www.geeksforgeeks.org/computer-networks/difference-between-authentication-and-authorization/) – Explains the difference between authn and authz.
 - [Benefits and Drawbacks of Using Passport.js for Authentication – LinkedIn Advice](https://www.linkedin.com/advice/0/what-benefits-drawbacks-using-passportjs-authentication) – Pros and cons of Passport.js.
 - [Server-side Applications Authentication Example – GitHub MSU-Courses](https://github.com/MSU-Courses/development-server-side-applications/tree/main/08_Auth) – Example project for implementing authentication.
+- [What is the purpose of the express-validator middleware in Express JS?
+](https://www.geeksforgeeks.org/node-js/what-is-the-purpose-of-the-express-validator-middleware-in-express-js/)
+- [Efficient Log Rotation in Node.js with Winston and File Rotation](https://medium.com/@jagadeeshgade008/efficient-log-rotation-in-node-js-with-winston-and-file-rotation-9bf94075d699)
 
 
 
