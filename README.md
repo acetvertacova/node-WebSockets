@@ -59,8 +59,24 @@ The current project is a continuation of the development started in the [node-to
     ├── config/
     │   └── config.js                    # Database configuration for Sequelize
     ├── middleware/                      # Custom middleware 
+    │   ├── asyncWrapper.js     
+    │   ├── errorHandler.js     
+    │   ├── requestLogger.js      
     │   └── auth.js                      
     │
+    ├── errors/                          # Custom validation
+    │   ├── 404/   
+    │   │   ├── CategoryNotFound.js  
+    │   │   ├── ToDoNotFound.js                         
+    │   │   └── UserNotFound.js                                               
+    │   ├── AppError.js     
+    │   ├── AuthenticationError.js     
+    │   ├── NotFoundError.js      
+    │   └── ValidationError.js       
+    │   
+    ├── utils/  
+    │   └── logger.js     
+    │  
     ├── controllers/
     │   ├── CategoriesController.js      # Handles category-related logic
     │   ├── UserController.js            # Handles user-related logic
@@ -91,6 +107,21 @@ The current project is a continuation of the development started in the [node-to
     ├── swagger/
     │   └── swagger.js                   # Swagger configuration for API docs
     │
+    ├── validators/                          # Custom validators
+    │   ├── categories/   
+    │   │   ├── createValidator.js  
+    │   │   ├── getByIdValidator.js                         
+    │   │   └── updateValidator.js  
+    │   ├── toDos/
+    │   │   ├── createValidator.js  
+    │   │   ├── getByIdValidator.js 
+    │   │   ├── getAllValidator.js                          
+    │   │   └── updateValidator.js    
+    │   ├── users/ 
+    │   │   ├── loginValidator.js 
+    │   │   └── registrationValidator.js  
+    │   └── handleValidationError.js
+    │  
     ├── .gitignore                       # Git ignore file
     ├── app.js                           # Main entry point of the application
     ├── example.env                      # Example environment configuration
