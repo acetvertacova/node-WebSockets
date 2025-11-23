@@ -123,7 +123,7 @@ The current project is a continuation of the development started in the [node-to
     │   └── handleValidationError.js
     ├── websocket/
     │   ├── index.js  
-    │   ├── notifyClient.js        
+    │   └── notifyClient.js        
     │  
     ├── .gitignore                       # Git ignore file
     ├── app.js                           # Main entry point of the application
