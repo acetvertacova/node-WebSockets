@@ -583,7 +583,7 @@ export async function create(req, res) {
 }
 ```
 
-<img src="node-simple-toDo-app-auth/usage/task-was-created.png">
+<img src="usage/task-was-created.png">
 
 ## Benefits
 
