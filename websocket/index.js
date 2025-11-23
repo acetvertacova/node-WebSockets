@@ -10,8 +10,8 @@ export function initWebSocket(server) {
     wss.on("connection", (ws, req) => {
         console.log("WS: client connecting...");
 
-        const params = new URLSearchParams(req.url.replace("/?", ""));
-        const token = params.get("token");
+        const authHeader = req.headers["authorization"];
+        const token = authHeader.split(" ")[1];
 
         if (!token) {
             ws.close(4001, "Auth required");

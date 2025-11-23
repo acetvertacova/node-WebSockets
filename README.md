@@ -121,6 +121,9 @@ The current project is a continuation of the development started in the [node-to
     │   │   ├── loginValidator.js 
     │   │   └── registrationValidator.js  
     │   └── handleValidationError.js
+    ├── websocket/
+    │   ├── index.js  
+    │   ├── notifyClient.js        
     │  
     ├── .gitignore                       # Git ignore file
     ├── app.js                           # Main entry point of the application
@@ -521,87 +524,120 @@ Logging is implemented using **winston** to track important events and errors. F
 
 ---
 
+## WebSocket Integration
+
+## 1️⃣ Problems and Limitations of REST in the Current Application
+
+- **Lack of real-time updates**: REST requires the client to constantly poll the server to check if a new Todo was created or if its state has changed.
+
+- **High load due to frequent polling**: continuous HTTP requests increase server and network load.
+
+- **UX delays**: the user does not see changes immediately until the page is refreshed or a new request is made.
+
+- **No bidirectional communication**: REST API only supports client → server requests; the server cannot push data to the client on its own.
+
+
+## 2️⃣ Advantages of WebSocket for This Application
+
+- **Bidirectional communication**: the server can send notifications to the client immediately after an event (e.g., creating, updating, or deleting a Todo).
+
+- **User-specific notifications**: only the user who triggered the action receives the message, without broadcasting to everyone.
+
+- **Instant feedback**: improves UX as the user sees updates in real time.
+
+- **Flexible architecture**: easy to add new types of notifications or extend functionality.
+
+--- 
+
+This project extends the existing `REST API` with real-time updates using **WebSockets**. Users can receive instant notifications about their own actions, such as creating, updating, deleting a `Todo`.
+
+### Features
+
+- **WebSocket server** initialized separately and attached to the existing HTTP server.
+- **JWT-protected connections**: clients must provide a valid JWT token via the `Authorization` header:
+
+```bash 
+    Authorization: Bearer <token>
+```
+
+- **User-specific notifications**: messages are sent only to the user who triggered the event.
+- **Clean architecture**: WebSocket logic is fully separated from the main `app.js`.
+
+### Example usage
+
+1. Server-side notification after creating a Todo:
+
+```javascript
+import { notifyUser } from "./websocket/notify.js";
+
+export async function create(req, res) {
+    const { title, category_id } = req.body;
+    const newTodo = await Todo.create({ title, category_id, user_id: req.user.id });
+
+    notifyUser(req.user.id, {
+        event: "Task was created!",
+        data: newTodo
+    });
+
+    res.status(201).json(newTodo);
+}
+```
+
+<img src="node-simple-toDo-app-auth/usage/task-was-created.png">
+
+## Benefits
+
+- **Adds real-time capabilities** without affecting existing REST API endpoints.
+- **Users receive immediate feedback** after actions.
+- **WebSocket logic is modular** and easy to extend with additional middleware, event handlers, or role-based access.
+
+---
+
 ## Control Questions?
 
+1. Main Differences Between REST and WebSocket
 
-### 1. What is JWT and how does it work?
 
- A JSON Web Token (JWT) is a secure way to send information between a client and a server. It is mainly used in web applications and APIs to verify users and prevent unauthorized access. A JWT is JSON data secured with a cryptographic signature. Consists of three parts: **header**, **payload**, **signature**.  
+| Feature                     | REST                                     | WebSocket                                       |
+|-----------------------------|------------------------------------------|-------------------------------------------------|
+| **Protocol**                | HTTP/HTTPS                               | TCP (WebSocket over HTTP for initial handshake) |
+| **Communication direction** | Client → Server                          | Bidirectional: Client ↔ Server                  |
+| **Interaction model**       | Request-response                         | Event-driven, server push messages              |
+| **Real-time support**       | No, requires polling                     | Yes, instant notifications                      |
+| **Data format**             | Usually JSON, strictly defined endpoints | JSON or any format, flexible message structure  |
 
-### 2. How to securely store user passwords?
+2. Advantages of Using WebSocket Compared to REST
 
-- Use **bcrypt** or a similar library to hash passwords.  
-- Never store passwords in plain text.  
-- Hash the password before saving it to the database and verify it during login with `bcrypt.compare()`.  
-- Optionally, use a **salt** to increase security. 
+- **Real-time updates are required**: users need to see changes immediately without refreshing the page or polling the server.
+- **Reducing server and network load**: continuous HTTP polling in REST increases traffic and server workload, whereas WebSocket maintains a persistent connection with lower overhead.
+- **Improving user experience (UX)**: instant notifications make the application more interactive and responsive.
+- **Flexible and modular architecture**: developers can define custom events and messages, extend functionality easily, and implement user-specific notifications without changing REST endpoints.
+- **Bidirectional communication**: the server can push data to the client as events happen, which is impossible with standard REST.
 
-### 3. What is the difference between authentication and authorization?
+3. Limitations and Drawbacks of WebSocket
 
-- **Authentication** — verifying the identity of the user (e.g., login and password).  
-- **Authorization** — checking the user’s permissions to access resources (e.g., user vs admin role).  
-- Simple way to remember: **Authentication = Who are you?**, **Authorization = What can you do?**  
+- **Complexity**: managing persistent connections and handling events is more complex than standard REST requests.
+- **No standard CRUD structure**: unlike REST, WebSocket does not enforce standard endpoints for create, read, update, delete operations; events must be designed manually.
+- **Monitoring and debugging**: fewer built-in tools compared to HTTP; tracking errors, reconnections, and message delivery requires additional logic.
 
-### 4. What are the advantages and disadvantages of using Passport.js for authentication in Node.js?
+4. Integration of WebSocket with the Existing Application Architecture
 
-**Advantages:**  
+- **Server setup**: The WebSocket server is initialized on top of the existing HTTP server used by Express, allowing REST API and WebSocket to run together seamlessly.
+- **Authentication**: JWT-based authentication is reused from the REST API. Each WebSocket connection validates the token and attaches the authenticated user to the `ws.user` object.
+- **Database integration**: WebSocket events (e.g., creating, updating, or deleting a Todo) use existing Sequelize models to fetch or send data, ensuring consistency with REST operations.
+- **Minimal impact on REST**: Existing REST endpoints remain fully functional; WebSocket is added as a parallel real-time notification channel.
+- **Modular design**: WebSocket logic is separated into modules (`initWebSocket`, `notifyUser`) with clear responsibilities, making it easy to extend, add middleware, or implement user-specific notifications.
+- **User-specific notifications**: Only the user who triggers an action receives relevant messages, avoiding unnecessary broadcasting.
 
-One of the main benefits of passport.js is that it abstracts away the complexity of handling different authentication methods and protocols. You don't have to worry about the details of encrypting passwords, generating tokens, validating credentials, or redirecting users.
-
-**Disadvantages:**  
-
-Can be complex for beginners due to strategies and serialization. Sometimes overkill for simple JWT-based apps. Adds an extra dependency and configuration overhead.  
-
-### 5. Advantages of Centralized Error Handling in Express
-
-- **Consistency of responses:** All errors are returned in a unified JSON format, making it easier for frontend or client applications to handle them.  
-- **Simplified route code:** No need to write repetitive `try/catch` blocks in every route, especially for asynchronous operations.  
-- **Management of different error types:** Custom error classes (e.g., `NotFoundError`, `ValidationError`, `AuthenticationError`) allow easy differentiation and handling of various situations.  
-- **Easier logging and monitoring:** All errors pass through a single handler, simplifying log management and integration with monitoring systems.  
-
-### 6. Logging Categories and Reasoning
-
-The system tracks the following log categories:
-
-1. **Server errors (`error`)**  
-   - Unexpected errors that require developer attention.  
-   - Helps quickly identify and fix bugs.  
- 
-2. **Successful requests (`info`)**  
-   - Tracks API activity for auditing and statistics.  
-   - Helps analyze frequently used routes or features.  
-
-**Reasoning:**  
-This set covers key events: internal problems, user mistakes, and normal application activity, balancing useful insights and log volume.
-
-### 7. Approaches to Data Validation in Express
-
-Common approaches:
-
-1. **Manual validation using `if` and `throw`**  
-   - Simple checks directly in route handlers.  
-   - Drawback: code duplication and poor scalability.  
-
-2. **Validation libraries**  
-   - **express-validator** – route-level validators using chains, integrates well with middleware.  
-   - **Joi** – schema-based validation of entire objects, more declarative.  
-   - **zod** – modern library for TypeScript/JS, supports validation and type inference.  
-
-**Approach used in this project:**  
-- **express-validator** is used for route validation (`createTaskValidationSchema`, `getAllTasksValidationSchema`, ...).  
-- Validation errors are automatically forwarded to the global error handler via `handleValidationErrors`.  
-- Provides detailed error messages for each field.
 ---
 
 ## Useful Links
 
-- [JWT (JSON Web Token) – GeeksforGeeks](https://www.geeksforgeeks.org/web-tech/json-web-token-jwt/) – Overview of JWTs and how they work.
-- [How to Store Passwords in a Database – GeeksforGeeks](https://www.geeksforgeeks.org/dbms/store-password-database/) – Secure password storage methods.
-- [Difference Between Authentication and Authorization – GeeksforGeeks](https://www.geeksforgeeks.org/computer-networks/difference-between-authentication-and-authorization/) – Explains the difference between authn and authz.
-- [Benefits and Drawbacks of Using Passport.js for Authentication – LinkedIn Advice](https://www.linkedin.com/advice/0/what-benefits-drawbacks-using-passportjs-authentication) – Pros and cons of Passport.js.
-- [Server-side Applications Authentication Example – GitHub MSU-Courses](https://github.com/MSU-Courses/development-server-side-applications/tree/main/08_Auth) – Example project for implementing authentication.
-- [What is the purpose of the express-validator middleware in Express JS?
-](https://www.geeksforgeeks.org/node-js/what-is-the-purpose-of-the-express-validator-middleware-in-express-js/)
-- [Efficient Log Rotation in Node.js with Winston and File Rotation](https://medium.com/@jagadeeshgade008/efficient-log-rotation-in-node-js-with-winston-and-file-rotation-9bf94075d699)
+- [WebSocket: разбираем как работает](https://habr.com/ru/sandbox/171066/)
+- [The WebSocket API (WebSockets)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
+- [WebSocket and Its Difference from HTTP](https://www.geeksforgeeks.org/web-tech/what-is-web-socket-and-how-it-is-different-from-the-http/) 
+- [Web Api Fundamentals](https://github.com/MSU-Courses/development-server-side-applications/tree/main/11_Web_API_Fundamentals#websockets)
+
 
 
 
