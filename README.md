@@ -526,7 +526,7 @@ Logging is implemented using **winston** to track important events and errors. F
 
 ## WebSocket Integration
 
-## 1️⃣ Problems and Limitations of REST in the Current Application
+## Problems and Limitations of REST in the Current Application
 
 - **Lack of real-time updates**: REST requires the client to constantly poll the server to check if a new Todo was created or if its state has changed.
 
@@ -537,7 +537,7 @@ Logging is implemented using **winston** to track important events and errors. F
 - **No bidirectional communication**: REST API only supports client → server requests; the server cannot push data to the client on its own.
 
 
-## 2️⃣ Advantages of WebSocket for This Application
+## Advantages of WebSocket for This Application
 
 - **Bidirectional communication**: the server can send notifications to the client immediately after an event (e.g., creating, updating, or deleting a Todo).
 
@@ -595,7 +595,7 @@ export async function create(req, res) {
 
 ## Control Questions?
 
-1. Main Differences Between REST and WebSocket
+1. **Main Differences Between REST and WebSocket**
 
 
 | Feature                     | REST                                     | WebSocket                                       |
@@ -606,7 +606,7 @@ export async function create(req, res) {
 | **Real-time support**       | No, requires polling                     | Yes, instant notifications                      |
 | **Data format**             | Usually JSON, strictly defined endpoints | JSON or any format, flexible message structure  |
 
-2. Advantages of Using WebSocket Compared to REST
+2. **Advantages of Using WebSocket Compared to REST**
 
 - **Real-time updates are required**: users need to see changes immediately without refreshing the page or polling the server.
 - **Reducing server and network load**: continuous HTTP polling in REST increases traffic and server workload, whereas WebSocket maintains a persistent connection with lower overhead.
@@ -614,13 +614,13 @@ export async function create(req, res) {
 - **Flexible and modular architecture**: developers can define custom events and messages, extend functionality easily, and implement user-specific notifications without changing REST endpoints.
 - **Bidirectional communication**: the server can push data to the client as events happen, which is impossible with standard REST.
 
-3. Limitations and Drawbacks of WebSocket
+3. **Limitations and Drawbacks of WebSocket**
 
 - **Complexity**: managing persistent connections and handling events is more complex than standard REST requests.
 - **No standard CRUD structure**: unlike REST, WebSocket does not enforce standard endpoints for create, read, update, delete operations; events must be designed manually.
 - **Monitoring and debugging**: fewer built-in tools compared to HTTP; tracking errors, reconnections, and message delivery requires additional logic.
 
-4. Integration of WebSocket with the Existing Application Architecture
+4. **Integration of WebSocket with the Existing Application Architecture**
 
 - **Server setup**: The WebSocket server is initialized on top of the existing HTTP server used by Express, allowing REST API and WebSocket to run together seamlessly.
 - **Authentication**: JWT-based authentication is reused from the REST API. Each WebSocket connection validates the token and attaches the authenticated user to the `ws.user` object.
