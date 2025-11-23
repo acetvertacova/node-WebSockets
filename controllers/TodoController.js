@@ -1,6 +1,7 @@
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 import { ToDoNotFoundError } from "../errors/404/ToDoNotFoundError.js";
+import { notifyUser } from '../websocket/notifyClients.js';
 const Todo = db.Todo;
 const Category = db.Category;
 const User = db.User;
@@ -51,6 +52,12 @@ export async function getById(req, res) {
 export async function create(req, res) {
     const { title, category_id } = req.body;
     const newTodo = await Todo.create({ title, category_id, user_id: req.user.id });
+
+    notifyUser(req.user.id, {
+        event: "Task was created!",
+        data: newTodo
+    });
+
     res.status(201).json(newTodo);
 }
 
@@ -65,6 +72,12 @@ export async function update(req, res) {
     todo.completed = completed ?? todo.completed;
 
     await todo.save();
+
+    notifyUser(req.user.id, {
+        event: "Task was updated!",
+        data: todo
+    });
+
     res.json(todo);
 }
 
@@ -76,6 +89,12 @@ export async function toggleCompleted(req, res) {
 
     todo.completed = !todo.completed;
     await todo.save();
+
+    notifyUser(req.user.id, {
+        event: "Task's status was updated!",
+        data: todo
+    });
+
     res.json(todo);
 }
 
@@ -85,6 +104,11 @@ export async function remove(req, res) {
     if (!todo) throw new ToDoNotFoundError(id);
 
     await todo.destroy();
+
+    notifyUser(req.user.id, {
+        event: "Task was deleted!",
+        data: todo
+    });
     res.status(204).send();
 }
 

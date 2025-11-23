@@ -13,7 +13,7 @@ const todoRouter = express.Router();
 todoRouter.get('/', authenticateJWT, getAllTasksValidationSchema, handleValidationErrors, asyncWrapper(todoController.getAll));
 todoRouter.post('/', authenticateJWT, createTaskValidationSchema, handleValidationErrors, asyncWrapper(todoController.create));
 todoRouter.get('/:id', authenticateJWT, isOwnerOrAdmin, taskIdValidationSchema, handleValidationErrors, asyncWrapper(todoController.getById));
-todoRouter.put('/:id', authenticateJWT, isAdmin, updateTaskValidationSchema, handleValidationErrors, asyncWrapper(todoController.update));
+todoRouter.put('/:id', authenticateJWT, isOwnerOrAdmin, updateTaskValidationSchema, handleValidationErrors, asyncWrapper(todoController.update));
 todoRouter.delete('/:id', authenticateJWT, isAdmin, taskIdValidationSchema, handleValidationErrors, asyncWrapper(todoController.remove));
 todoRouter.patch('/:id/toggle', authenticateJWT, isAdmin, asyncWrapper(todoController.toggleCompleted));
 
